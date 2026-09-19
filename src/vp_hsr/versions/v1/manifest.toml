@@ -1,0 +1,54 @@
+schema = 1
+pathway = "hsr"
+version = "v1"
+released = "2026-09-19"
+reason = "first release: binary XGBoost on Morgan, MACCS and RDKit descriptors over the Tox21 heat-shock-response screen"
+
+[signature]
+version = 1
+inputs = ["smiles"]
+
+[[signature.outputs]]
+name = "hsr_activation"
+dtype = "float32"
+range = [0.0, 1.0]
+semantics = "P(switches on the heat-shock-element reporter in the Tox21 qHTS screen). The assay reads the response, not the protein that misfolded"
+missing = "NaN when RDKit cannot parse the input SMILES"
+
+[[signature.outputs]]
+name = "hsr_cytotox"
+dtype = "float32"
+range = [0.0, 1.0]
+semantics = "P(reduces viability in the counter-screen over the same library). A compound scoring high on both readouts lit the reporter in a cell that was also dying"
+missing = "NaN when RDKit cannot parse the input SMILES"
+
+[dataset]
+name = "Tox21 heat shock response qHTS"
+source = "PubChem BioAssay AID 743210 (qHTS assay for small molecule activators of the heat shock response signaling pathway) and AID 743209 (qHTS assay for small molecule activators of the heat shock response signaling pathway - cell viability counter screen), rows called Active or Inactive, one row per compound labelled by majority call across its assay records"
+url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/assay/aid/743210/concise/CSV"
+retrieved = "2026-09-06"
+licence = "public-domain"
+redistributable = true
+path = "data/hsr_tox21.parquet"
+labels = ["label", "cytotox"]
+sha256 = "3c5a234a87b1a9ad258b2504489306d500c3e6d9a68fd11c4cd9e26bfce567bd"
+n_rows = 5823
+base_rate = 0.006526
+fetch = "python -m vp_hsr.data fetch --verify"
+
+[model]
+family = "xgboost-binary"
+features = "combo3"
+fit = "one model per output, each on every compound its endpoint labels minus a 10% scaffold carve used for early stopping"
+weights = "weights.joblib"
+sha256 = "f31a6542db721e7d34ad0d7c486a04593fee37ae4c0d9001aa11ab98b8eff401"
+
+[protocol]
+id = "scaffold-balanced-5seed@1"
+provider = "vp-core"
+core_version = "1.4.0"
+
+[provenance]
+python = "3.11.11"
+rdkit = "2026.03.5"
+xgboost = "3.2.0"
